@@ -18,6 +18,11 @@ class Crawler
     /**
      * @var \Spatie\Crawler\Url;
      */
+    protected $parentUrl;
+
+    /**
+     * @var \Spatie\Crawler\Url;
+     */
     protected $baseUrl;
 
     /**
@@ -58,6 +63,8 @@ class Crawler
         $this->crawlProfile = new CrawlAllUrls();
 
         $this->crawledUrls = collect();
+
+        $this->parentUrl = '';
     }
 
     /**
@@ -93,6 +100,8 @@ class Crawler
      *
      * @param \Spatie\Crawler\Url|string $baseUrl
      *
+     * @return array|null
+     *
      * @throws \Spatie\Crawler\Exceptions\InvalidBaseUrl
      */
     public function startCrawling($baseUrl)
@@ -109,11 +118,11 @@ class Crawler
 
         $this->crawlUrl($baseUrl);
 
-        $this->crawlObserver->finishedCrawling();
+        return $this->crawlObserver->finishedCrawling();
     }
 
     /**
-     * Crawl the given url.
+     * Crawl the given url and set the parent url.
      *
      * @param \Spatie\Crawler\Url $url
      */
@@ -135,7 +144,7 @@ class Crawler
             $response = $exception->getResponse();
         }
 
-        $this->crawlObserver->hasBeenCrawled($url, $response);
+        $this->crawlObserver->hasBeenCrawled($url, $response, $this->parentUrl);
 
         $this->crawledUrls->push($url);
 
@@ -144,6 +153,7 @@ class Crawler
         }
 
         if ($url->host === $this->baseUrl->host) {
+            $this->parentUrl = $url;
             $this->crawlAllLinks($response->getBody()->getContents());
         }
     }
