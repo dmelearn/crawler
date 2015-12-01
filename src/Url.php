@@ -169,11 +169,10 @@ class Url
         $path = starts_with($this->path, '/') ? substr($this->path, 1) : $this->path;
 
         $port = ($this->port === 80 ? '' : ":{$this->port}");
-        
-		$query = '';
 
-        if(isset($this->query) && $this->query != '')
-        {
+        $query = '';
+
+        if (isset($this->query) && $this->query != '') {
             $query = '?' . $this->query;
         }
 
