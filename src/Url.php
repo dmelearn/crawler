@@ -32,12 +32,17 @@ class Url
     public $path;
 
     /**
+     * Create a new static Url.
+     * Remove any mistakenly added spaces from the beginning and end of the Url string.
+     *
      * @param $url
      *
      * @return static
      */
     public static function create($url)
     {
+        $url = trim($url);
+
         return new static($url);
     }
 
