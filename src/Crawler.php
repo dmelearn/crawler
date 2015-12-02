@@ -18,6 +18,11 @@ class Crawler
     /**
      * @var \Spatie\Crawler\Url;
      */
+    protected $parentUrl;
+
+    /**
+     * @var \Spatie\Crawler\Url;
+     */
     protected $baseUrl;
 
     /**
@@ -58,6 +63,8 @@ class Crawler
         $this->crawlProfile = new CrawlAllUrls();
 
         $this->crawledUrls = collect();
+
+        $this->parentUrl = '';
     }
 
     /**
@@ -93,6 +100,8 @@ class Crawler
      *
      * @param \Spatie\Crawler\Url|string $baseUrl
      *
+     * @return array|null
+     *
      * @throws \Spatie\Crawler\Exceptions\InvalidBaseUrl
      */
     public function startCrawling($baseUrl)
@@ -107,17 +116,18 @@ class Crawler
 
         $this->baseUrl = $baseUrl;
 
-        $this->crawlUrl($baseUrl);
+        $this->crawlUrl($baseUrl, $this->parentUrl);
 
-        $this->crawlObserver->finishedCrawling();
+        return $this->crawlObserver->finishedCrawling();
     }
 
     /**
-     * Crawl the given url.
+     * Crawl the given url and set the parent url.
      *
-     * @param \Spatie\Crawler\Url $url
+     * @param \Spatie\Crawler\Url        $url
+     * @param \Spatie\Crawler\Url|string $parentUrl
      */
-    protected function crawlUrl(Url $url)
+    protected function crawlUrl(Url $url, $parentUrl)
     {
         if (!$this->crawlProfile->shouldCrawl($url)) {
             return;
@@ -135,7 +145,7 @@ class Crawler
             $response = $exception->getResponse();
         }
 
-        $this->crawlObserver->hasBeenCrawled($url, $response);
+        $this->crawlObserver->hasBeenCrawled($url, $response, $parentUrl);
 
         $this->crawledUrls->push($url);
 
@@ -144,7 +154,7 @@ class Crawler
         }
 
         if ($url->host === $this->baseUrl->host) {
-            $this->crawlAllLinks($response->getBody()->getContents());
+            $this->crawlAllLinks($response->getBody()->getContents(), $url);
         }
     }
 
@@ -152,41 +162,44 @@ class Crawler
      * Crawl all links in the given html.
      *
      * @param string $html
+     * @param string $parentUrl
      */
-    protected function crawlAllLinks($html)
+    protected function crawlAllLinks($html, $parentUrl)
     {
-        $allLinks = $this->getAllLinks($html);
+        $allLinks = $this->getAllLinks($html, $parentUrl);
 
         collect($allLinks)
-            ->filter(function (Url $url) {
-                return !$url->isEmailUrl();
+            ->filter(function ($urls) {
+                return !$urls['url']->isEmailUrl();
             })
-            ->map(function (Url $url) {
-                return $this->normalizeUrl($url);
+            ->map(function ($urls) {
+                return ['parent' => $this->normalizeUrl($urls['parent']), 'url' => $this->normalizeUrl($urls['url'])];
             })
-            ->filter(function (Url $url) {
-                return $this->crawlProfile->shouldCrawl($url);
+            ->filter(function ($urls) {
+                return $this->crawlProfile->shouldCrawl($urls['url']);
             })
-            ->each(function (Url $url) {
-                $this->crawlUrl($url);
+            ->each(function ($urls) {
+                $this->crawlUrl($urls['url'], $urls['parent']);
             });
     }
 
     /**
-     * Get all links in the given html.
+     * Get all links in the given html and pair them with their parent.
      *
      * @param string $html
+     * @param string $parentUrl
      *
-     * @return \Spatie\Crawler\Url[]
+     * @return \Illuminate\Support\Collection
      */
-    protected function getAllLinks($html)
+    protected function getAllLinks($html, $parentUrl)
     {
+        $this->parentUrl = $parentUrl;
         $domCrawler = new DomCrawler($html);
 
         return collect($domCrawler->filterXpath('//a')
             ->extract(['href']))
             ->map(function ($url) {
-                return Url::create($url);
+                return ['parent' => Url::create($this->parentUrl), 'url' => Url::create($url)];
             });
     }
 

@@ -11,6 +11,8 @@ This package provides a class to crawl links on a website.
 
 Spatie is a webdesign agency in Antwerp, Belgium. You'll find an overview of all our open source projects [on our website](https://spatie.be/opensource).
 
+**This package has been modified to return an array that includes the Url, Response and the Parent Url (the webpage that contains the hyperlink to the current url), once the current url has been crawled.**
+
 ## Installation
 
 This package can be installed via Composer:
@@ -42,10 +44,11 @@ public function willCrawl(Url $url);
 /**
  * Called when the crawler has crawled the given url.
  *
- * @param \Spatie\Crawler\Url       $url
- * @param \Psr\Http\Message\ResponseInterface $response
+ * @param \Spatie\Crawler\Url                      $url
+ * @param \Psr\Http\Message\ResponseInterface|null $response
+ * @param \Spatie\Crawler\Url|string               $parentUrl
  */
-public function hasBeenCrawled(Url $url, ResponseInterface $response);
+public function hasBeenCrawled(Url $url, $response, $parentUrl);
 
 /**
  * Called when the crawl has ended.

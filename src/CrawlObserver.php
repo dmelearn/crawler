@@ -16,8 +16,9 @@ interface CrawlObserver
      *
      * @param \Spatie\Crawler\Url                      $url
      * @param \Psr\Http\Message\ResponseInterface|null $response
+     * @param \Spatie\Crawler\Url|string               $parentUrl
      */
-    public function hasBeenCrawled(Url $url, $response);
+    public function hasBeenCrawled(Url $url, $response, $parentUrl);
 
     /**
      * Called when the crawl has ended.
