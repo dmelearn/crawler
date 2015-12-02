@@ -24,6 +24,11 @@ class Url
     /**
      * @var null|string
      */
+    public $query;
+
+    /**
+     * @var null|string
+     */
     public $path;
 
     /**
@@ -45,7 +50,7 @@ class Url
     {
         $urlProperties = parse_url($url);
 
-        foreach (['scheme', 'host', 'path', 'port'] as $property) {
+        foreach (['scheme', 'host', 'path', 'port', 'query'] as $property) {
             if (isset($urlProperties[$property])) {
                 $this->$property = $urlProperties[$property];
             }
@@ -129,6 +134,20 @@ class Url
     }
 
     /**
+     * Set the query.
+     *
+     * @param string $query
+     *
+     * @return $this
+     */
+    public function setQuery($query)
+    {
+        $this->query = $query;
+
+        return $this;
+    }
+
+    /**
      * Remove the fragment.
      *
      * @return $this
@@ -151,6 +170,12 @@ class Url
 
         $port = ($this->port === 80 ? '' : ":{$this->port}");
 
-        return "{$this->scheme}://{$this->host}{$port}/{$path}";
+        $query = '';
+
+        if (isset($this->query) && $this->query != '') {
+            $query = '?' . $this->query;
+        }
+
+        return "{$this->scheme}://{$this->host}{$port}/{$path}{$query}";
     }
 }

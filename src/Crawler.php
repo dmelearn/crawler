@@ -221,7 +221,8 @@ class Crawler
 
             $url->setScheme($this->baseUrl->scheme)
                 ->setHost($this->baseUrl->host)
-                ->setPort($this->baseUrl->port);
+                ->setPort($this->baseUrl->port)
+                ->setQuery($this->baseUrl->query);
         }
 
         if ($url->isProtocolIndependent()) {

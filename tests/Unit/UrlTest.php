@@ -16,7 +16,7 @@ class UrlTest extends PHPUnit_Framework_TestCase
     {
         parent::setUp();
 
-        $this->testUrl = new Url('https://spatie.be/opensource');
+        $this->testUrl = new Url('https://spatie.be/opensource?query=test');
     }
 
     /**
@@ -28,6 +28,7 @@ class UrlTest extends PHPUnit_Framework_TestCase
         $this->assertEquals('spatie.be', $this->testUrl->host);
         $this->assertEquals(80, $this->testUrl->port);
         $this->assertEquals('/opensource', $this->testUrl->path);
+        $this->assertEquals('query=test', $this->testUrl->query);
     }
 
     /**
@@ -35,7 +36,7 @@ class UrlTest extends PHPUnit_Framework_TestCase
      */
     public function it_can_be_converted_to_a_string()
     {
-        $this->assertEquals('https://spatie.be/opensource', (string) $this->testUrl);
+        $this->assertEquals('https://spatie.be/opensource?query=test', (string) $this->testUrl);
     }
 
     /**
@@ -73,7 +74,7 @@ class UrlTest extends PHPUnit_Framework_TestCase
     {
         $this->testUrl->setHost('google.com');
 
-        $this->assertEquals('https://google.com/opensource', (string) $this->testUrl);
+        $this->assertEquals('https://google.com/opensource?query=test', (string) $this->testUrl);
     }
 
     /**
@@ -83,7 +84,17 @@ class UrlTest extends PHPUnit_Framework_TestCase
     {
         $this->testUrl->setScheme('http');
 
-        $this->assertEquals('http://spatie.be/opensource', (string) $this->testUrl);
+        $this->assertEquals('http://spatie.be/opensource?query=test', (string) $this->testUrl);
+    }
+
+    /**
+     * @test
+     */
+    public function it_can_change_the_query()
+    {
+        $this->testUrl->setQuery('query=new');
+
+        $this->assertEquals('https://spatie.be/opensource?query=new', (string) $this->testUrl);
     }
 
     /**
@@ -123,7 +134,7 @@ class UrlTest extends PHPUnit_Framework_TestCase
         $this->testUrl->setPort(3000);
 
         $this->assertEquals(3000, $this->testUrl->port);
-        $this->assertEquals('https://spatie.be:3000/opensource', (string) $this->testUrl);
+        $this->assertEquals('https://spatie.be:3000/opensource?query=test', (string) $this->testUrl);
     }
 
     /**
@@ -133,6 +144,6 @@ class UrlTest extends PHPUnit_Framework_TestCase
     {
         $this->testUrl->setPort(80);
 
-        $this->assertEquals('https://spatie.be/opensource', (string) $this->testUrl);
+        $this->assertEquals('https://spatie.be/opensource?query=test', (string) $this->testUrl);
     }
 }
