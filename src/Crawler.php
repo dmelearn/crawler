@@ -41,6 +41,11 @@ class Crawler
     protected $crawlProfile;
 
     /**
+     * @var bool
+     */
+    protected $duplicates;
+
+    /**
      * @return static
      */
     public static function create()
@@ -99,12 +104,13 @@ class Crawler
      * Start the crawling process.
      *
      * @param \Spatie\Crawler\Url|string $baseUrl
+     * @param bool $duplicates
      *
      * @return array|null
      *
      * @throws \Spatie\Crawler\Exceptions\InvalidBaseUrl
      */
-    public function startCrawling($baseUrl)
+    public function startCrawling($baseUrl, $duplicates = false)
     {
         if (!$baseUrl instanceof Url) {
             $baseUrl = Url::create($baseUrl);
@@ -116,7 +122,7 @@ class Crawler
 
         $this->baseUrl = $baseUrl;
 
-        $this->crawlUrl($baseUrl, $this->parentUrl);
+        $this->crawlUrl($baseUrl, $this->parentUrl, $duplicates);
 
         return $this->crawlObserver->finishedCrawling();
     }
@@ -124,10 +130,11 @@ class Crawler
     /**
      * Crawl the given url and set the parent url.
      *
-     * @param \Spatie\Crawler\Url        $url
+     * @param \Spatie\Crawler\Url $url
      * @param \Spatie\Crawler\Url|string $parentUrl
+     * @param bool $duplicates allow duplicate external urls to be crawled
      */
-    protected function crawlUrl(Url $url, $parentUrl)
+    protected function crawlUrl(Url $url, $parentUrl, $duplicates = false)
     {
         if (!$this->crawlProfile->shouldCrawl($url)) {
             return;
@@ -140,21 +147,26 @@ class Crawler
         $this->crawlObserver->willCrawl($url);
 
         try {
-            $response = $this->client->request('GET', (string) $url);
+            $response = $this->client->request('GET', (string)$url);
         } catch (RequestException $exception) {
             $response = $exception->getResponse();
         }
-
-        $this->crawlObserver->hasBeenCrawled($url, $response, $parentUrl);
-
-        $this->crawledUrls->push($url);
 
         if (!$response) {
             return;
         }
 
+        if (!$duplicates) {
+            $this->crawledUrls->push($url);
+        }
+
+        $this->crawlObserver->hasBeenCrawled($url, $response, $parentUrl);
+
         if ($url->host === $this->baseUrl->host) {
-            $this->crawlAllLinks($response->getBody()->getContents(), $url);
+            if ($duplicates) {
+                $this->crawledUrls->push($url);
+            }
+            $this->crawlAllLinks($response->getBody()->getContents(), $url, $duplicates);
         }
     }
 
@@ -163,9 +175,12 @@ class Crawler
      *
      * @param string $html
      * @param string $parentUrl
+     * @param bool $duplicates
      */
-    protected function crawlAllLinks($html, $parentUrl)
+    protected function crawlAllLinks($html, $parentUrl, $duplicates = false)
     {
+        $this->duplicates = $duplicates;
+
         $allLinks = $this->getAllLinks($html, $parentUrl);
 
         collect($allLinks)
@@ -179,7 +194,7 @@ class Crawler
                 return $this->crawlProfile->shouldCrawl($urls['url']);
             })
             ->each(function ($urls) {
-                $this->crawlUrl($urls['url'], $urls['parent']);
+                $this->crawlUrl($urls['url'], $urls['parent'], $this->duplicates);
             });
     }
 
@@ -213,7 +228,7 @@ class Crawler
     protected function hasAlreadyCrawled(Url $url)
     {
         foreach ($this->crawledUrls as $crawledUrl) {
-            if ((string) $crawledUrl === (string) $url) {
+            if ((string)$crawledUrl === (string)$url) {
                 return true;
             }
         }
