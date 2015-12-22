@@ -11,7 +11,7 @@ This package provides a class to crawl links on a website.
 
 Spatie is a webdesign agency in Antwerp, Belgium. You'll find an overview of all our open source projects [on our website](https://spatie.be/opensource).
 
-**This package has been modified to return an array that includes the Url, Response and the Parent Url (the webpage that contains the hyperlink to the current url), once the current url has been crawled.**
+**This package has been modified to return an array that includes the Url, Response and the Parent Url (the webpage that contains the hyperlink to the current url), once the current url has been crawled. It also has an option for allowing external urls to be crawled each time, if they are link to multiple times.**
 
 ## Installation
 
