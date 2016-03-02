@@ -187,6 +187,9 @@ class Crawler
             ->filter(function ($urls) {
                 return !$urls['url']->isEmailUrl();
             })
+            ->filter(function ($urls) {
+                return !$urls['url']->isJavascript();
+            })
             ->map(function ($urls) {
                 return ['parent' => $this->normalizeUrl($urls['parent']), 'url' => $this->normalizeUrl($urls['url'])];
             })
@@ -197,7 +200,7 @@ class Crawler
                 $this->crawlUrl($urls['url'], $urls['parent'], $this->duplicates);
             });
     }
-
+    
     /**
      * Get all links in the given html and pair them with their parent.
      *
